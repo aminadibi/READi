@@ -426,7 +426,7 @@ server <- function(input, output, session) {
         new_id      <- paste0("choice_reactive_", i)
         output[[radio_id]] <- renderUI({                  # storing a conditional renderUI in radio_id depending on "study_design_ref" above
           if(input[[study_id]] == "Pragmatic controlled trial/Large simple trial"){
-            new_id_2    <- lapply(seq_len(8), function(i){paste(new_id, "_", i, sep = "")})  # creating a unique id for all questions
+            new_id_2    <- lapply(seq_len(8), function(x){paste(new_id, "_", x, sep = "")})  # creating a unique id for all questions
             choice_prag <- c("Low Risk", "Unclear Risk", "High Risk")                        # choices for all questions will be the same
             labels_prag <- c("Random sequence generation (selection bias)",
                              "Allocation concealment (selection bias)",
@@ -442,8 +442,8 @@ server <- function(input, output, session) {
                       br(),
                       br(),
               lapply(seq_len(8), # creating a radioButton for each question (indexing the question and label from the vectors above)
-                     function(i){radioButtons(inputId = new_id_2[[i]], 
-                                              label = labels_prag[i], 
+                     function(x){radioButtons(inputId = new_id_2[[x]], 
+                                              label = labels_prag[x], 
                                               choices = choice_prag, # choices are the same - no need to idex
                                               inline = TRUE,
                                               selected = character(0))}),
@@ -457,7 +457,7 @@ server <- function(input, output, session) {
                            selected = character(0))
             ) 
           } else if (input[[study_id]] == "Quasi experimental"){
-            new_id_2     <- lapply(seq_len(12), function(i){paste(new_id, "_", i, sep = "")})
+            new_id_2     <- lapply(seq_len(12), function(x){paste(new_id, "_", x, sep = "")})
             choice_quasi <- c("Yes", "No", "Other")
             labels_quasi <- c("Was the study question or objective clearly stated?",
                              "Were eligibility/selection criteria for the study population prespecified and clearly described?",
@@ -476,9 +476,9 @@ server <- function(input, output, session) {
                       tagList(a("NHLBI Tool", href="https://www.nhlbi.nih.gov/health-topics/study-quality-assessment-tools", target = "_blank")),
                       br(),
                       br(),
-                      lapply(seq_len(8), 
-                             function(i){radioButtons(inputId = new_id_2[[i]], 
-                                                      label = labels_quasi[i], 
+                      lapply(seq_len(8), # choices are all the same and repetitive and as such, we can use a loop to add them to each question above
+                             function(x){radioButtons(inputId = new_id_2[[x]], 
+                                                      label = labels_quasi[x], 
                                                       choices = choice_quasi, 
                                                       inline = TRUE,
                                                       selected = character(0))}),
@@ -491,9 +491,21 @@ server <- function(input, output, session) {
                                    selected = character(0))
                       )
           } else if (input[[study_id]] %in% c("Prospective cohort study", "Retrospective cohort study", "Case-control study")) {
+            responses <- c("Yes", "Probably Yes", "Probably No" , "No", "No Information")
+            rob_output11 <- paste0("rob_output11_",i) # creating flexible uiOutput id (11 indicating question 1.1)
+            bias_input11 <- paste0("bias11_",i)
+            
             wellPanel(strong("1B. Please rate the risk of bias of this study using the ROBINS-I assessment tool"),
                       br(),
-                      tagList(a("Robins-I", href="https://sites.google.com/site/riskofbiastool/welcome/home", target = "_blank"))
+                      tagList(a("Robins-I", href="https://sites.google.com/site/riskofbiastool/welcome/home", target = "_blank")),
+                      wellPanel(strong("1. Bias due to Confounding:"),
+                                radioButtons(label = "1.1 Is there potential for confounding of the effect of intervention in this study?",
+                                             inputId = bias_input11,
+                                             choices = responses,
+                                             inline = TRUE,
+                                             selected = "No Information"),
+                                uiOutput(rob_output11)), # This first question is responsive - there will be no need to answer parts 1.2-1.6 if No or probably no
+                      wellPanel(strong("2. Bias in Selection of Participants into the Study"))
             )
           } else if (input[[study_id]] == "Systematic review/Meta-analysis/Network Meta-analysis") {
             wellPanel(strong("1B. Please rate the quality of the study using the AMSTAR 2 Checklist."),
@@ -509,6 +521,132 @@ server <- function(input, output, session) {
       })
       
     })
+    
+    
+    # -------------------------- RISK OF BIAS ROBBIN TOOL -----------------------------#
+    # -------------------------- RISK OF BIAS ROBBIN TOOL -----------------------------#
+    # -------------------------- RISK OF BIAS ROBBIN TOOL -----------------------------#
+    # -------------------------- RISK OF BIAS ROBBIN TOOL -----------------------------#
+    # -------- THE FOLLOWING CODE IS FOR UIOUTPUTS FOR RISK OF BIAS SECTION
+    
+    # ---- for quesstion response to 1.1
+    observeEvent(input$t2_n_studies, {
+     lapply(seq_len(input$t2_n_studies), function(i){
+       bias_input11_2 <- paste0("bias11_",i) # second place bias_input11 is used (again, 11 indicating for risk of bias question 1.1)
+       rob_output11_2 <- paste0("rob_output11_",i)
+
+       output[[rob_output11_2]] <- renderUI({
+         if(input[[bias_input11_2]] %in% c("No", "Probably No")){
+           "This study is considered to have low risk of bias due to confounding - please move on to question 2."
+         } else {
+           responses <- c("Yes", "Probably Yes", "Probably No" , "No", "No Information")
+           bias_input12 <- paste0("bias12_",i)
+           rob_output12 <- paste0("rob_output12_",i)
+
+           list(radioButtons(label = "1.2 Was the analysis based on splitting participants' follow up time according to intervention received?",
+                        inputId = bias_input12,
+                        choices = responses,
+                        inline = TRUE,
+                        selected = "No Information"),
+           uiOutput(rob_output12))
+         }
+       })
+
+     })
+    })
+
+    # ---- for quesstion response to 1.2
+    observeEvent(input$t2_n_studies, {
+      lapply(seq_len(input$t2_n_studies), function(i){
+        responses <- c("Yes", "Probably Yes", "Probably No" , "No", "No Information")
+        bias_input12_2 <- paste0("bias12_",i) # second place bias_input11 is used (again, 11 indicating for risk of bias question 1.1)
+        rob_output12_2 <- paste0("rob_output12_",i)
+
+        output[[rob_output12_2]] <- renderUI({
+          if(input[[bias_input12_2]] %in% c("Yes", "Probably Yes")){
+            bias_input13 <- paste0("bias13_",i)
+            rob_output13 <- paste0("rob_output13_",i)
+            
+            list(radioButtons(label = "1.3 Were the intervention discontinuations or switches likely to be related to factors that  are prognostic for the outcome?",
+                              inputId = bias_input13,
+                              inline = TRUE,
+                              choices = responses,
+                              selected = "No Information"),
+                 uiOutput(rob_output13))
+          } else {
+            bias_input14 <- paste0("bias14_",i)
+            bias_input15 <- paste0("bias15_",i)
+            bias_input16 <- paste0("bias16_",i)
+            rob_output14 <- paste0("rob_output14_",i)
+            
+            list(radioButtons(label = "1.4 Did the authors use an appropriate analysis method that controlled for all the important confounding domains?",
+                         inputId = bias_input14,
+                         inline = TRUE,
+                         choices = responses,
+                         selected = "No Information"),
+                 radioButtons(label = "1.5 Were confounding domains that were controlled for measured reliably and validly by the variables available in this study?",
+                              inputId = bias_input15,
+                              inline = TRUE,
+                              choices = responses,
+                              selected = "No Information"),
+                 radioButtons(label = "1.6 Did the authors control for any post-intervention variables that could have been affected by the intervention?",
+                              inputId = bias_input16,
+                              inline = TRUE,
+                              choices = responses,
+                              selected = "No Information"),
+                 uiOutput(rob_output14))
+                 
+          }
+      })
+        
+    })
+})
+    
+    # ---- for quesstion response to 1.3
+    observeEvent(input$t2_n_studies, {
+      lapply(seq_len(input$t2_n_studies), function(i){
+        responses <- c("Yes", "Probably Yes", "Probably No" , "No", "No Information")
+        bias_input13_2 <- paste0("bias13_",i) # second place bias_input11 is used (again, 11 indicating for risk of bias question 1.1)
+        rob_output13_2 <- paste0("rob_output13_",i)
+        
+        output[[rob_output13_2]] <- renderUI({
+          if(input[[bias_input13_2]] %in% c("No", "Probably No")){
+            bias_input14 <- paste0("bias14_",i)
+            bias_input15 <- paste0("bias15_",i)
+            bias_input16 <- paste0("bias16_",i)
+          
+            list(radioButtons(label = "1.4 Did the authors use an appropriate analysis method that controlled for all the important confounding domains?",
+                              inputId = bias_input14,
+                              inline = TRUE,
+                              choices = responses,
+                              selected = "No Information"),
+                 radioButtons(label = "1.5 Were confounding domains that were controlled for measured reliably and validly by the variables available in this study?",
+                                  inputId = bias_input15,
+                                  inline = TRUE,
+                                  choices = responses,
+                                  selected = "No Information"),
+                 radioButtons(label = "1.6 Did the authors control for any post-intervention variables that could have been affected by the intervention?",
+                                  inputId = bias_input16,
+                                  inline = TRUE,
+                                  choices = responses,
+                                  selected = "No Information"))
+          } else {
+            bias_input17 <- paste0("bias17_",i)
+            rob_output17 <- paste0("rob_output17_",i)
+            
+            list(radioButtons(label = "1.7 Did the authors use an appropriate analysis method that adjusted for all the important confounding domains and for time-varying confounding?",
+                         inputId = bias_input17,
+                         inline = TRUE,
+                         choices = responses,
+                         selected = "No Information"),
+                 uiOutput(rob_output17))
+          }
+          
+      })
+        
+    })
+})
+    
     
   ######################################
   ######################################       Need work - incomplete
